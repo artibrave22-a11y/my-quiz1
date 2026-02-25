@@ -3,290 +3,303 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Тренажер: Имя числительное</title>
+    <title>Интерактивный тренажер | Числительные</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #4a90e2;
-            --success: #2ecc71;
-            --error: #e74c3c;
-            --bg: #f0f2f5;
-            --text: #2c3e50;
-            --card-bg: #ffffff;
+            --accent: #6366f1;
+            --accent-hover: #4f46e5;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --success: #10b981;
+            --error: #ef4444;
+            --border: #e2e8f0;
         }
+
+        * { box-sizing: border-box; transition: all 0.2s ease-out; }
 
         body { 
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+            font-family: 'Inter', sans-serif; 
             background-color: var(--bg); 
-            color: var(--text);
-            display: flex; 
-            justify-content: center; 
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            justify-content: center;
             padding: 40px 20px;
-            line-height: 1.6;
         }
 
-        .quiz-container { 
-            background: var(--card-bg); 
-            padding: 40px; 
-            border-radius: 20px; 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.05); 
-            width: 100%; 
-            max-width: 700px; 
+        /* Прогресс-бар сверху */
+        .progress-container {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 6px;
+            background: #e2e8f0;
+            z-index: 1000;
+        }
+        #progress-bar {
+            height: 100%; width: 0%;
+            background: linear-gradient(90deg, #6366f1, #a855f7);
         }
 
-        h1 { 
-            text-align: center; 
-            font-size: 2rem;
-            margin-bottom: 10px;
-            color: var(--primary);
+        .quiz-wrapper {
+            width: 100%;
+            max-width: 680px;
+            animation: slideUp 0.6s ease-out;
         }
 
-        .subtitle {
+        .header {
             text-align: center;
-            color: #7f8c8d;
             margin-bottom: 40px;
         }
 
-        .question { 
-            margin-bottom: 35px; 
-            padding: 20px; 
-            border-radius: 12px; 
-            border: 1px solid #edf2f7;
-            transition: transform 0.2s;
+        .header h1 { font-size: 2.5rem; font-weight: 800; margin: 0; letter-spacing: -0.025em; color: #0f172a; }
+        .header p { color: var(--text-muted); margin-top: 8px; font-size: 1.1rem; }
+
+        .card {
+            background: var(--card);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 10px 15px -3px rgba(0,0,0,0.1);
+            border: 1px solid var(--border);
         }
 
-        .question p { 
-            font-weight: 600; 
-            font-size: 1.15rem; 
-            margin-top: 0;
+        .question-block {
+            margin-bottom: 40px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid var(--border);
+        }
+        .question-block:last-child { border-bottom: none; }
+
+        .q-text { 
+            font-size: 1.25rem; 
+            font-weight: 700; 
             margin-bottom: 20px; 
+            display: flex;
+            align-items: flex-start;
+        }
+        .q-num {
+            background: #e0e7ff;
+            color: var(--accent);
+            width: 28px; height: 28px;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.9rem; margin-right: 12px; flex-shrink: 0;
+            margin-top: 2px;
         }
 
-        .options label { 
+        .option-label {
             display: flex;
             align-items: center;
-            padding: 14px 18px; 
-            margin: 10px 0; 
-            border: 2px solid #edf2f7; 
-            border-radius: 10px; 
-            cursor: pointer; 
-            transition: all 0.2s ease;
-        }
-
-        .options label:hover { 
-            background-color: #f8fbff; 
-            border-color: var(--primary); 
-        }
-
-        /* Если выбрано */
-        .options input[type="radio"]:checked + span {
-            font-weight: 600;
-        }
-        
-        input[type="radio"] { 
-            width: 20px;
-            height: 20px;
-            margin-right: 15px; 
+            padding: 16px 20px;
+            margin: 12px 0;
+            border: 2px solid var(--border);
+            border-radius: 16px;
             cursor: pointer;
-            accent-color: var(--primary);
+            font-weight: 500;
         }
 
-        /* Состояния после проверки */
-        .result-text { 
-            margin-top: 15px; 
-            font-weight: bold; 
-            display: none; 
-            padding: 10px 15px; 
-            border-radius: 8px;
-            animation: fadeIn 0.4s ease;
+        .option-label:hover:not(.disabled) {
+            border-color: var(--accent);
+            background: #f5f3ff;
+            transform: translateX(4px);
         }
 
-        .explanation { 
-            margin-top: 10px; 
-            font-size: 0.95rem; 
-            display: none; 
-            background: #fff9db; 
-            padding: 15px; 
-            border-left: 5px solid #f1c40f; 
-            border-radius: 4px;
-            animation: fadeIn 0.6s ease;
+        input[type="radio"] {
+            width: 22px; height: 22px;
+            margin-right: 16px;
+            accent-color: var(--accent);
         }
 
-        .correct-ans { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .wrong-ans { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        /* Результаты */
+        .feedback {
+            margin-top: 15px;
+            padding: 16px;
+            border-radius: 12px;
+            display: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .correct-box { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+        .error-box { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+
+        .hint {
+            margin-top: 8px;
+            font-weight: 400;
+            font-size: 0.9rem;
+            opacity: 0.9;
+            line-height: 1.5;
+        }
 
         /* Кнопки */
-        .btn-group { display: flex; gap: 15px; margin-top: 30px; }
-        
-        button { 
-            flex: 1; 
-            padding: 16px; 
-            border: none; 
-            border-radius: 12px; 
-            font-size: 1rem; 
-            font-weight: 700; 
-            cursor: pointer; 
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        .footer-btns {
+            display: flex;
+            gap: 16px;
+            margin-top: 20px;
         }
 
-        #check-btn { background: var(--primary); color: white; box-shadow: 0 4px 14px rgba(74, 144, 226, 0.4); }
-        #check-btn:hover { background: #357abd; transform: translateY(-2px); }
-        
-        #reset-btn { background: #ecf0f1; color: #7f8c8d; display: none; }
-        #reset-btn:hover { background: #bdc3c7; color: #2c3e50; }
-
-        #final-score { 
-            text-align: center; 
-            font-size: 1.4rem; 
-            margin-top: 30px; 
-            padding: 25px; 
-            background: #e3f2fd; 
-            color: #1976d2; 
-            border-radius: 15px; 
-            display: none; 
-            font-weight: 800;
+        button {
+            flex: 1;
+            padding: 18px;
+            border-radius: 16px;
+            border: none;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .primary-btn { background: var(--accent); color: white; box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3); }
+        .primary-btn:hover { background: var(--accent-hover); transform: translateY(-2px); }
+
+        .reset-btn { background: #f1f5f9; color: var(--text-muted); display: none; }
+        .reset-btn:hover { background: #e2e8f0; color: var(--text-main); }
+
+        #score-plate {
+            text-align: center;
+            margin-top: 30px;
+            padding: 30px;
+            border-radius: 24px;
+            background: #1e293b;
+            color: white;
+            display: none;
+            animation: zoomIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
-        /* Для мобилок */
-        @media (max-width: 480px) {
-            .quiz-container { padding: 20px; }
-            h1 { font-size: 1.5rem; }
-        }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+
+        .disabled { opacity: 0.6; cursor: not-allowed !important; }
     </style>
 </head>
 <body>
 
-<div class="quiz-container">
-    <h1>Русский язык</h1>
-    <p class="subtitle">Раздел: Имя числительное</p>
-    
-    <form id="quiz-form">
-        <div class="question">
-            <p>1. Укажите собирательное числительное:</p>
-            <div class="options">
-                <label><input type="radio" name="q1" value="0"><span>Пять</span></label>
-                <label><input type="radio" name="q1" value="0"><span>Пятый</span></label>
-                <label><input type="radio" name="q1" value="1"><span>Пятеро</span></label>
+<div class="progress-container"><div id="progress-bar"></div></div>
+
+<div class="quiz-wrapper">
+    <div class="header">
+        <h1>Тренажер</h1>
+        <p>Имя числительное</p>
+    </div>
+
+    <div class="card">
+        <form id="quiz-form">
+            <div class="question-block">
+                <div class="q-text"><span class="q-num">1</span>Какое числительное является собирательным?</div>
+                <div class="options">
+                    <label class="option-label"><input type="radio" name="q1" value="0">Пять</label>
+                    <label class="option-label"><input type="radio" name="q1" value="0">Пятый</label>
+                    <label class="option-label"><input type="radio" name="q1" value="1">Пятеро</label>
+                </div>
+                <div class="feedback"></div>
             </div>
-            <div class="result-text"></div>
-            <div class="explanation"><b>Важно:</b> Собирательные числительные (двое, трое, четверо...) воспринимают группу как единое целое.</div>
-        </div>
 
-        <div class="question">
-            <p>2. В какой строке только порядковые числительные?</p>
-            <div class="options">
-                <label><input type="radio" name="q2" value="0"><span>Три, тридцать, триста</span></label>
-                <label><input type="radio" name="q2" value="1"><span>Первый, сотый, миллионный</span></label>
-                <label><input type="radio" name="q2" value="0"><span>Двое, трое, четверо</span></label>
+            <div class="question-block">
+                <div class="q-text"><span class="q-num">2</span>В какой строке только порядковые числительные?</div>
+                <div class="options">
+                    <label class="option-label"><input type="radio" name="q2" value="0">Три, тридцать, триста</label>
+                    <label class="option-label"><input type="radio" name="q2" value="1">Первый, сотый, миллионный</label>
+                    <label class="option-label"><input type="radio" name="q2" value="0">Двое, трое, четверо</label>
+                </div>
+                <div class="feedback"></div>
             </div>
-            <div class="result-text"></div>
-            <div class="explanation"><b>Справка:</b> Порядковые числительные обозначают порядок при счёте и отвечают на вопрос «Который?».</div>
-        </div>
 
-        <div class="question">
-            <p>3. С каким словом собирательные числительные НЕ дружат?</p>
-            <div class="options">
-                <label><input type="radio" name="q3" value="0"><span>Медвежата</span></label>
-                <label><input type="radio" name="q3" value="0"><span>Студенты</span></label>
-                <label><input type="radio" name="q3" value="1"><span>Балерины</span></label>
+            <div class="question-block">
+                <div class="q-text"><span class="q-num">3</span>С каким словом НЕЛЬЗЯ употребить собирательное числительное?</div>
+                <div class="options">
+                    <label class="option-label"><input type="radio" name="q3" value="0">Медвежата</label>
+                    <label class="option-label"><input type="radio" name="q3" value="0">Друзья</label>
+                    <label class="option-label"><input type="radio" name="q3" value="1">Подруги</label>
+                </div>
+                <div class="feedback"></div>
             </div>
-            <div class="result-text"></div>
-            <div class="explanation"><b>Правило:</b> Собирательные числительные не сочетаются с существительными, обозначающими лиц женского пола.</div>
-        </div>
 
-        <div class="question">
-            <p>4. Где мягкий знак (Ь) спрятался в середине слова?</p>
-            <div class="options">
-                <label><input type="radio" name="q4" value="0"><span>Пятнадцать</span></label>
-                <label><input type="radio" name="q4" value="1"><span>Шестьдесят</span></label>
-                <label><input type="radio" name="q4" value="0"><span>Девятнадцать</span></label>
+            <div class="question-block">
+                <div class="q-text"><span class="q-num">4</span>В каком слове Ь пишется в середине слова?</div>
+                <div class="options">
+                    <label class="option-label"><input type="radio" name="q4" value="0">Пятнадцать</label>
+                    <label class="option-label"><input type="radio" name="q4" value="1">Шестьдесят</label>
+                    <label class="option-label"><input type="radio" name="q4" value="0">Двенадцать</label>
+                </div>
+                <div class="feedback"></div>
             </div>
-            <div class="result-text"></div>
-            <div class="explanation"><b>Запомни:</b> В числительных от 50 до 80 и от 500 до 900 Ь пишется внутри слова.</div>
-        </div>
 
-        <div class="question">
-            <p>5. Как правильно сказать в Творительном падеже (с кем? чем?) для 500?</p>
-            <div class="options">
-                <label><input type="radio" name="q5" value="0"><span>Пятистами</span></label>
-                <label><input type="radio" name="q5" value="1"><span>Пятьюстами</span></label>
-                <label><input type="radio" name="q5" value="0"><span>Пятьсотми</span></label>
+            <div class="question-block">
+                <div class="q-text"><span class="q-num">5</span>Верная форма Творительного падежа для 500:</div>
+                <div class="options">
+                    <label class="option-label"><input type="radio" name="q5" value="0">Пятистами</label>
+                    <label class="option-label"><input type="radio" name="q5" value="0">Пятьсотми</label>
+                    <label class="option-label"><input type="radio" name="q5" value="1">Пятьюстами</label>
+                </div>
+                <div class="feedback"></div>
             </div>
-            <div class="result-text"></div>
-            <div class="explanation"><b>Склонение:</b> У сложных числительных склоняются обе части: пятью (Т.п. от пять) + стами (Т.п. от сто).</div>
-        </div>
 
-        <div class="btn-group">
-            <button type="button" id="check-btn" onclick="checkQuiz()">Проверить мои знания</button>
-            <button type="button" id="reset-btn" onclick="resetQuiz()">Начать сначала</button>
-        </div>
-    </form>
+            <div class="footer-btns">
+                <button type="button" id="check-btn" class="primary-btn" onclick="checkQuiz()">Проверить ответы</button>
+                <button type="button" id="reset-btn" class="reset-btn" onclick="resetQuiz()">Начать заново</button>
+            </div>
+        </form>
+    </div>
 
-    <div id="final-score"></div>
+    <div id="score-plate"></div>
 </div>
 
 <script>
+    const hints = [
+        "Собирательные обозначают совокупность: двое, трое, пятеро.",
+        "Порядковые отвечают на вопрос 'Который?'.",
+        "Собирательные не дружат с женским полом (правильно: 'две подруги').",
+        "Ь пишется внутри в числительных 50-80 и 500-900.",
+        "У сложных числительных склоняются обе части (пятью + стами)."
+    ];
+
+    // Отслеживание прогресса
+    document.querySelectorAll('input[type="radio"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            const total = 5;
+            const checked = document.querySelectorAll('input[type="radio"]:checked').length;
+            document.getElementById('progress-bar').style.width = (checked / total * 100) + '%';
+        });
+    });
+
     function checkQuiz() {
-        const questions = document.querySelectorAll('.question');
-        const radios = document.querySelectorAll('input[type="radio"]');
+        const blocks = document.querySelectorAll('.question-block');
         let score = 0;
 
-        // Блокируем выбор
-        radios.forEach(r => r.disabled = true);
-
-        questions.forEach(q => {
-            const selected = q.querySelector('input[type="radio"]:checked');
-            const res = q.querySelector('.result-text');
-            const exp = q.querySelector('.explanation');
+        blocks.forEach((block, i) => {
+            const selected = block.querySelector('input:checked');
+            const feedback = block.querySelector('.feedback');
+            const labels = block.querySelectorAll('.option-label');
             
-            res.style.display = "block";
-            exp.style.display = "block";
+            feedback.style.display = "block";
+            
+            labels.forEach(l => l.classList.add('disabled'));
+            block.querySelectorAll('input').forEach(r => r.disabled = true);
 
-            if (selected) {
-                if (selected.value === "1") {
-                    score++;
-                    res.innerHTML = "✨ Верно!";
-                    res.className = "result-text correct-ans";
-                } else {
-                    res.innerHTML = "🧐 Ошибочка вышла";
-                    res.className = "result-text wrong-ans";
-                }
+            if (selected && selected.value === "1") {
+                score++;
+                feedback.className = "feedback correct-box";
+                feedback.innerHTML = `✅ Верно! <div class="hint">${hints[i]}</div>`;
             } else {
-                res.innerHTML = "⚠️ Вопрос пропущен";
-                res.className = "result-text wrong-ans";
+                feedback.className = "feedback error-box";
+                feedback.innerHTML = `❌ Ошибка. <div class="hint">${hints[i]}</div>`;
             }
         });
 
         document.getElementById('check-btn').style.display = "none";
-        document.getElementById('reset-btn').style.display = "block";
-
-        const finalScore = document.getElementById('final-score');
-        finalScore.style.display = "block";
+        document.getElementById('reset-btn').style.display = "flex";
         
-        let rank = score === 5 ? "Отлично! Ты мастер чисел! 🏆" : 
-                   score >= 3 ? "Хороший результат! 👍" : "Нужно еще подучить теорию 📖";
-        
-        finalScore.innerHTML = `Твой результат: ${score} / 5<br><small>${rank}</small>`;
+        const plate = document.getElementById('score-plate');
+        plate.style.display = "block";
+        plate.innerHTML = `<div style="font-size: 3rem; margin-bottom: 10px;">${score}/5</div>
+                           <div style="font-weight: 500; opacity: 0.8;">${score === 5 ? 'Идеально! 🔥' : 'Хорошая попытка!'}</div>`;
         
         window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     }
 
     function resetQuiz() {
-        const radios = document.querySelectorAll('input[type="radio"]');
-        radios.forEach(r => r.disabled = false);
-
-        document.getElementById('quiz-form').reset();
-        
-        document.querySelectorAll('.result-text, .explanation, #final-score').forEach(el => el.style.display = "none");
-        
-        document.getElementById('check-btn').style.display = "block";
-        document.getElementById('reset-btn').style.display = "none";
-        
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        location.reload(); // Самый простой способ сбросить всё до идеального состояния
     }
 </script>
 
